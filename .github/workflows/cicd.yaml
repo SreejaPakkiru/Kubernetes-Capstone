@@ -42,7 +42,7 @@ jobs:
 
     # Step 4: Deploy to EC2
     - name: Deploy to EC2
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
@@ -53,6 +53,6 @@ jobs:
           git pull origin main
           export IMAGE_TAG=${{ env.IMAGE_TAG }}
           export ACR_NAME=${{ secrets.ACR_NAME }}
-          kubectl set image deployment/web web=${{ secrets.ACR_NAME }}.azurecr.io/web:${{ env.IMAGE_TAG }} -n default || true
-          kubectl set image deployment/nginx nginx=${{ secrets.ACR_NAME }}.azurecr.io/nginx:${{ env.IMAGE_TAG }} -n default || true
           kubectl apply -f k8s/
+          kubectl set image deployment/web web=$ACR_NAME.azurecr.io/web:$IMAGE_TAG -n default || true
+          kubectl set image deployment/nginx nginx=$ACR_NAME.azurecr.io/nginx:$IMAGE_TAG -n default || true
