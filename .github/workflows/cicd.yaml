@@ -32,13 +32,17 @@ jobs:
     - name: Build & Push Web
       run: |
         docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/web:$IMAGE_TAG ./web
+        docker tag ${{ secrets.ACR_NAME }}.azurecr.io/web:$IMAGE_TAG ${{ secrets.ACR_NAME }}.azurecr.io/web:latest
         docker push ${{ secrets.ACR_NAME }}.azurecr.io/web:$IMAGE_TAG
+        docker push ${{ secrets.ACR_NAME }}.azurecr.io/web:latest
 
     # Step 3: Build & Push Nginx image
     - name: Build & Push Nginx
       run: |
         docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/nginx:$IMAGE_TAG ./nginx
+        docker tag ${{ secrets.ACR_NAME }}.azurecr.io/nginx:$IMAGE_TAG ${{ secrets.ACR_NAME }}.azurecr.io/nginx:latest
         docker push ${{ secrets.ACR_NAME }}.azurecr.io/nginx:$IMAGE_TAG
+        docker push ${{ secrets.ACR_NAME }}.azurecr.io/nginx:latest
 
     # Step 4: Deploy to EC2
     - name: Deploy to EC2
