@@ -1,0 +1,36 @@
+services:
+
+ #Redis service acts as in-memory database/cache
+  redis:
+    image: 'redislabs/redismod'
+    ports:
+      - '6379:6379'
+      
+  #web1 is the first instance of the Node.js application(used for load balancing with nginx)
+  web1:
+    build: ./web
+    #Image is tagged and pushed to AWS ECR using TAG_VALUE
+    image: 869588908060.dkr.ecr.ap-south-1.amazonaws.com/capstone-project/capstone-repo:web1-${TAG_VALUE}
+    restart: on-failure
+    hostname: web1
+    ports:
+      - '81:5000'
+      
+  #web2 is the second instance of the Node.js application(used for load balancing with nginx)
+  web2:
+    build: ./web
+    image: 869588908060.dkr.ecr.ap-south-1.amazonaws.com/capstone-project/capstone-repo:web2-${TAG_VALUE}
+    restart: on-failure
+    hostname: web2
+    ports:
+      - '82:5000'
+
+  #nginx reverse proxy / load balance: Routes traffic to web1 and web2 instances
+  nginx:
+    build: ./nginx
+    image: 869588908060.dkr.ecr.ap-south-1.amazonaws.com/capstone-project/capstone-repo:nginx-${TAG_VALUE}
+    ports:
+      - '80:80'
+    depends_on:
+      - web1
+      - web2
