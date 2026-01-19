@@ -17,6 +17,12 @@ spec:
         image: capstoneacr.azurecr.io/nginx:v1
         ports:
         - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -28,3 +34,4 @@ spec:
     app: nginx
   ports:
   - port: 80
+    targetPort: 80
