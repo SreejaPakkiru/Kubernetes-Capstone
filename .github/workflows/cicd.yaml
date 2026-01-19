@@ -40,28 +40,20 @@ jobs:
         docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/nginx:$IMAGE_TAG ./nginx
         docker push ${{ secrets.ACR_NAME }}.azurecr.io/nginx:$IMAGE_TAG
 
-    # Step 4: Configure kubectl to AKS
-    - name: Azure Login (required for AKS context)
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-    - name: Set AKS context
+    # Step 4: Deploy to EC2
+    - name: Deploy to EC2
       run: |
-        az aks get-credentials \
-          --resource-group ${{ secrets.RESOURCE_GROUP }} \
-          --name ${{ secrets.AKS_CLUSTER }} \
-          --overwrite-existing
-
-    # Step 5: Update image tags in k8s manifests
-    - name: Update Kubernetes image tags
-      run: |
-        sed -i "s|image: .*web:.*|image: ${{ secrets.ACR_NAME }}.azurecr.io/web:$IMAGE_TAG|g" k8s/web.yaml
-        sed -i "s|image: .*nginx:.*|image: ${{ secrets.ACR_NAME }}.azurecr.io/nginx:$IMAGE_TAG|g" k8s/nginx.yaml
-
-    # Step 6: Apply manifests
-    - name: Deploy to AKS
-      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+        cd ~/kubernetes-capstone || git clone https://github.com/SreejaPakkiru/Kubernetes-Capstone.git ~/kubernetes-capstone
+        cd ~/kubernetes-capstone
+        git pull origin main
+        export IMAGE_TAG=${{ env.IMAGE_TAG }}
+        export ACR_NAME=${{ secrets.ACR_NAME }}
+        kubectl set image deployment/web web=${{ secrets.ACR_NAME }}.azurecr.io/web:${{ env.IMAGE_TAG }} -n default || true
+        kubectl set image deployment/nginx nginx=${{ secrets.ACR_NAME }}.azurecr.io/nginx:${{ env.IMAGE_TAG }} -n default || true
         kubectl apply -f k8s/
+        EOF
