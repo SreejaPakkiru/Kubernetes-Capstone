@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: capstoneacr.azurecr.io/web:v1
+        image: capstoneacr.azurecr.io/web:latest
         ports:
         - containerPort: 5000
 ---

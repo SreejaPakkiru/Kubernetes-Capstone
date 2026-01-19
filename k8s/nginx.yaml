@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: capstoneacr.azurecr.io/nginx:v1
+        image: capstoneacr.azurecr.io/nginx:latest
         ports:
         - containerPort: 80
         livenessProbe:
