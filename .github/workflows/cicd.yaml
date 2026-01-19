@@ -42,18 +42,17 @@ jobs:
 
     # Step 4: Deploy to EC2
     - name: Deploy to EC2
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-        ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-        cd ~/kubernetes-capstone || git clone https://github.com/SreejaPakkiru/Kubernetes-Capstone.git ~/kubernetes-capstone
-        cd ~/kubernetes-capstone
-        git pull origin main
-        export IMAGE_TAG=${{ env.IMAGE_TAG }}
-        export ACR_NAME=${{ secrets.ACR_NAME }}
-        kubectl set image deployment/web web=${{ secrets.ACR_NAME }}.azurecr.io/web:${{ env.IMAGE_TAG }} -n default || true
-        kubectl set image deployment/nginx nginx=${{ secrets.ACR_NAME }}.azurecr.io/nginx:${{ env.IMAGE_TAG }} -n default || true
-        kubectl apply -f k8s/
-        EOF
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd ~/kubernetes-capstone || git clone https://github.com/SreejaPakkiru/Kubernetes-Capstone.git ~/kubernetes-capstone
+          cd ~/kubernetes-capstone
+          git pull origin main
+          export IMAGE_TAG=${{ env.IMAGE_TAG }}
+          export ACR_NAME=${{ secrets.ACR_NAME }}
+          kubectl set image deployment/web web=${{ secrets.ACR_NAME }}.azurecr.io/web:${{ env.IMAGE_TAG }} -n default || true
+          kubectl set image deployment/nginx nginx=${{ secrets.ACR_NAME }}.azurecr.io/nginx:${{ env.IMAGE_TAG }} -n default || true
+          kubectl apply -f k8s/
